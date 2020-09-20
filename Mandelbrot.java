@@ -4,52 +4,41 @@
  * and open the template in the editor.
  */
 package mandelbrot;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.util.*;
 /**
  *
  * @author Mr. Nobody
  */
 class ima{
-    double real=0,img=0;    
-    public ima(double x,double y){
+    float real=0,img=0;    
+    public ima(float x,float y){
         this.real=x;
         this.img=y;
-    }        
-    public ima square(){
-        ima sum=new ima(0,0);
-        sum.real=this.real*this.real-this.img*this.img;
-        sum.img=2*this.real*this.img;
-        return sum;
-    }
+    }      
 }
 
 public class Mandelbrot extends javax.swing.JFrame {
     /**
      * Creates new form Mandelbrot
      */
-    int k=10;
-    List<Double> realval=new ArrayList<>(); 
-    List<Double> imgval=new ArrayList<>(); 
+    Graphics2D g;
+    int k=20;
+    List<Float> realval=new ArrayList<>(); 
+    List<Float> imgval=new ArrayList<>(); 
     int midY,midX,xc,yc;
+    float[][] iter;
     
     public Mandelbrot() {
         initComponents();
     }
 
-    private ima iteration(ima a,ima x,int n){
-        if(realval.contains(a.real)&&imgval.get(realval.indexOf(a.real))==a.img){ 
-            realval.clear();
-            imgval.clear();
-            return new ima(n,0);            
-        }else if(n<k){
-            realval.add(a.real);
-            imgval.add(a.img);
-            n++;
-            return iteration(sum(a.square(),x),x,n);           
-        }      
-        realval.clear();
-        imgval.clear();        
-        return new ima(-1,0);
+    public ima square(ima a){
+        ima sum=new ima(0,0);
+        sum.real=a.real*a.real-a.img*a.img;
+        sum.img=2*a.real*a.img;
+        return sum;
     }
     
     public ima sum(ima x,ima y){
@@ -59,15 +48,36 @@ public class Mandelbrot extends javax.swing.JFrame {
         return sum;
     }
     
+    private ima iteration(ima a,ima x,int n){
+        if(realval.contains(a.real)){
+            realval.clear();
+            imgval.clear();
+            return new ima(n,0);            
+        }else if(n<k){
+            realval.add(a.real);
+            imgval.add(a.img);
+            n++;
+            return iteration(sum(square(a),x),x,n+1);           
+        }      
+        realval.clear();
+        imgval.clear();        
+        return new ima(-1,0);
+    }       
+    
     public void draw(){
-        int aTempFrom=Math.abs(Integer.parseInt(aFrom.getText()));
-        int aTempTo=Math.abs(Integer.parseInt(aTo.getText()));
-        int bTempFrom=Math.abs(Integer.parseInt(bFrom.getText()));
-        int bTempTo=Math.abs(Integer.parseInt(bTo.getText()));
+        float distanceA=Math.abs(Integer.parseInt(aFrom.getText())-Integer.parseInt(aTo.getText()));
+        float distanceB=Math.abs(Integer.parseInt(bFrom.getText())-Integer.parseInt(bTo.getText()));
         for(int y=yc-pan.getHeight();y<pan.getHeight()-yc;y++){
-            for(int x=xc-pan.getWidth();x<pan.getWidth()-xc;x++){                
-                System.out.println(iteration(new ima(0,0),new ima((aTempFrom+aTempTo)/pan.getWidth()*x,(bTempFrom+bTempTo)/pan.getWidth()*y),0).real+" "+iteration(new ima(0,0),new ima((aTempFrom+aTempTo)/pan.getWidth()*x,(bTempFrom+bTempTo)/pan.getWidth()*y),0).img);
-                //System.out.println(iteration(new ima(0,0),new ima(x,y),0));
+            for(int x=xc-pan.getWidth();x<pan.getWidth()-xc;x++){            
+                ima a=new ima(0,0);  //start number (squarable)
+                ima b=new ima(distanceA/pan.getWidth()*x,distanceB/pan.getWidth()*y);  //the adding number
+                iter[x+xc][y+yc]=iteration(a,b,0).real;
+//                if(iter==-1){                    
+//                }else if(iter>-1&&iter<18){
+//                    g.setColor(new Color(0,0,255));
+//                    g.
+//                }else if(iter>=18<)
+//                //System.out.println(iteration(a,b,0).real+" end me");
             }
         }
         System.out.println("done");
@@ -134,14 +144,14 @@ public class Mandelbrot extends javax.swing.JFrame {
         pan.setLayout(panLayout);
         panLayout.setHorizontalGroup(
             panLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 396, Short.MAX_VALUE)
         );
         panLayout.setVerticalGroup(
             panLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 396, Short.MAX_VALUE)
         );
 
-        getContentPane().add(pan, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 11, 400, -1));
+        getContentPane().add(pan, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 400, -1));
 
         drawBut.setText("Draw!");
         drawBut.addActionListener(new java.awt.event.ActionListener() {
@@ -149,19 +159,19 @@ public class Mandelbrot extends javax.swing.JFrame {
                 drawButActionPerformed(evt);
             }
         });
-        getContentPane().add(drawBut, new org.netbeans.lib.awtextra.AbsoluteConstraints(283, 421, 127, 73));
+        getContentPane().add(drawBut, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 410, 127, 80));
 
         jLabel1.setText("From");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 440, -1, -1));
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 430, -1, -1));
 
         jLabel2.setText("To");
-        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 470, -1, -1));
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 460, -1, -1));
 
         jLabel3.setText("A");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 420, 10, -1));
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 410, 10, -1));
 
         jLabel4.setText("B");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 420, -1, -1));
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 410, 10, -1));
 
         aFrom.setText("-2");
         aFrom.addActionListener(new java.awt.event.ActionListener() {
@@ -169,7 +179,7 @@ public class Mandelbrot extends javax.swing.JFrame {
                 aFromActionPerformed(evt);
             }
         });
-        getContentPane().add(aFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 440, 30, -1));
+        getContentPane().add(aFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 430, 30, -1));
 
         aTo.setText("2");
         aTo.addActionListener(new java.awt.event.ActionListener() {
@@ -177,7 +187,7 @@ public class Mandelbrot extends javax.swing.JFrame {
                 aToActionPerformed(evt);
             }
         });
-        getContentPane().add(aTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 470, 30, -1));
+        getContentPane().add(aTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 460, 30, -1));
 
         bFrom.setText("-1");
         bFrom.addActionListener(new java.awt.event.ActionListener() {
@@ -185,7 +195,7 @@ public class Mandelbrot extends javax.swing.JFrame {
                 bFromActionPerformed(evt);
             }
         });
-        getContentPane().add(bFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 440, 30, -1));
+        getContentPane().add(bFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 430, 30, -1));
 
         bTo.setText("1");
         bTo.addActionListener(new java.awt.event.ActionListener() {
@@ -193,7 +203,7 @@ public class Mandelbrot extends javax.swing.JFrame {
                 bToActionPerformed(evt);
             }
         });
-        getContentPane().add(bTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 470, 30, -1));
+        getContentPane().add(bTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 460, 30, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -217,6 +227,11 @@ public class Mandelbrot extends javax.swing.JFrame {
     private void drawButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_drawButActionPerformed
         // TODO add your handling code here:
         drawBut.setVisible(false);
+        xc=pan.getWidth()/2;
+        yc=pan.getHeight()/2;
+        pan.setBackground(Color.black);
+        g=(Graphics2D)pan.getGraphics();
+        iter=new float[pan.getWidth()][pan.getHeight()];
         draw(); 
     }//GEN-LAST:event_drawButActionPerformed
 
