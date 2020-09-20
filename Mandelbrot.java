@@ -5,7 +5,9 @@
  */
 package mandelbrot;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.*;
 /**
  *
@@ -22,8 +24,9 @@ class ima{
 public class Mandelbrot extends javax.swing.JFrame {
     /**
      * Creates new form Mandelbrot
-     */
-    Graphics2D g;
+     */    
+    BufferedImage image;
+    Graphics g;
     int k=20;
     List<Float> realval=new ArrayList<>(); 
     List<Float> imgval=new ArrayList<>(); 
@@ -64,7 +67,11 @@ public class Mandelbrot extends javax.swing.JFrame {
         return new ima(-1,0);
     }       
     
-    public void draw(){
+    protected void paintComponent(Graphics g) {
+        g.drawImage(image, 0, 0, null); // see javadoc for more info on the parameters            
+    }
+    
+    public void getIter(){
         float distanceA=Math.abs(Integer.parseInt(aFrom.getText())-Integer.parseInt(aTo.getText()));
         float distanceB=Math.abs(Integer.parseInt(bFrom.getText())-Integer.parseInt(bTo.getText()));
         for(int y=yc-pan.getHeight();y<pan.getHeight()-yc;y++){
@@ -72,17 +79,30 @@ public class Mandelbrot extends javax.swing.JFrame {
                 ima a=new ima(0,0);  //start number (squarable)
                 ima b=new ima(distanceA/pan.getWidth()*x,distanceB/pan.getWidth()*y);  //the adding number
                 iter[x+xc][y+yc]=iteration(a,b,0).real;
-//                if(iter==-1){                    
-//                }else if(iter>-1&&iter<18){
-//                    g.setColor(new Color(0,0,255));
-//                    g.
-//                }else if(iter>=18<)
-//                //System.out.println(iteration(a,b,0).real+" end me");
             }
         }
         System.out.println("done");
     }
     
+    private void draw(){
+        image=new BufferedImage(pan.getWidth(),pan.getHeight(),BufferedImage.TYPE_INT_RGB);
+        for(int y=0;y<image.getHeight();y++){
+            for(int x=0;x<image.getWidth();x++){
+                Graphics2D g2d = image.createGraphics();
+                if(iter[x][y]>=0&&iter[x][y]<10){                
+                    g2d.setColor(Color.BLUE);
+                }else if(iter[x][y]>=10&&iter[x][y]<20){
+                    g2d.setColor(Color.CYAN);                                                    
+                }else if(iter[x][y]>=20){
+                    g2d.setColor(Color.GREEN);
+                }
+                if(iter[x][y]!=-1)g2d.drawRect(x,y,1,1);
+            }
+        }
+        g.drawImage(image,
+                0,0,null);
+        System.out.println("Done drawing");
+    }
     
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -230,9 +250,9 @@ public class Mandelbrot extends javax.swing.JFrame {
         xc=pan.getWidth()/2;
         yc=pan.getHeight()/2;
         pan.setBackground(Color.black);
-        g=(Graphics2D)pan.getGraphics();
         iter=new float[pan.getWidth()][pan.getHeight()];
-        draw(); 
+        getIter(); 
+        draw();
     }//GEN-LAST:event_drawButActionPerformed
 
     /**
