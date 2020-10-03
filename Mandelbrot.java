@@ -6,9 +6,11 @@
 package mandelbrot;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.awt.image.WritableRaster;
+import static java.lang.Math.*;
 /**
  *
  * @author Mr. Nobody
@@ -25,18 +27,19 @@ public class Mandelbrot extends javax.swing.JFrame {
     /**
      * Creates new form Mandelbrot
      */    
-    BufferedImage image;
+    int midY,midX,xc,yc,FirstLVL=10,SecondLVL=20,ThirdLVL=100;
+    int[] pix;
     Graphics g;
-    int k=20;
-    List<Float> realval=new ArrayList<>(); 
-    List<Float> imgval=new ArrayList<>(); 
-    int midY,midX,xc,yc;
-    float[][] iter;
+    boolean vir=true;
     
     public Mandelbrot() {
         initComponents();
     }
 
+    public float len(ima a){
+        return (float) sqrt(a.real*a.real+a.img*a.img);
+    }
+    
     public ima square(ima a){
         ima sum=new ima(0,0);
         sum.real=a.real*a.real-a.img*a.img;
@@ -51,56 +54,39 @@ public class Mandelbrot extends javax.swing.JFrame {
         return sum;
     }
     
-    private ima iteration(ima a,ima x,int n){
-        if(realval.contains(a.real)){
-            realval.clear();
-            imgval.clear();
-            return new ima(n,0);            
-        }else if(n<k){
-            realval.add(a.real);
-            imgval.add(a.img);
-            n++;
-            return iteration(sum(square(a),x),x,n+1);           
-        }      
-        realval.clear();
-        imgval.clear();        
-        return new ima(-1,0);
+    private ima iteration(ima a,ima x,int n,int k){
+        if(n<k)return iteration(sum(square(a),x),x,n+1,k);
+        else return a;
     }       
     
-    protected void paintComponent(Graphics g) {
-        g.drawImage(image, 0, 0, null); // see javadoc for more info on the parameters            
-    }
-    
     public void getIter(){
+        System.out.println("Starting Iterating");
         float distanceA=Math.abs(Integer.parseInt(aFrom.getText())-Integer.parseInt(aTo.getText()));
         float distanceB=Math.abs(Integer.parseInt(bFrom.getText())-Integer.parseInt(bTo.getText()));
         for(int y=yc-pan.getHeight();y<pan.getHeight()-yc;y++){
             for(int x=xc-pan.getWidth();x<pan.getWidth()-xc;x++){            
                 ima a=new ima(0,0);  //start number (squarable)
                 ima b=new ima(distanceA/pan.getWidth()*x,distanceB/pan.getWidth()*y);  //the adding number
-                iter[x+xc][y+yc]=iteration(a,b,0).real;
+                int loc=(y+yc)*pan.getWidth()+x+xc;
+                if(len(iteration(a,b,0,100))<10){
+                    pix[loc]=(0<<16)|(105<<8)|105;            
+                }else if(len(iteration(a,b,0,20))>10){
+                    pix[loc]=(0<<16)|(175<<8)|175;
+                }else if(len(iteration(a,b,0,50))>10){
+                    pix[loc]=(0<<16)|(255<<8)|255;
+                }else{                    
+                    pix[loc]=(0<<16)|(0<<8)|255;
+                }
             }
-        }
-        System.out.println("done");
-    }
+        } 
+        System.out.println("Done Iterating");
+    }   
     
     private void draw(){
-        image=new BufferedImage(pan.getWidth(),pan.getHeight(),BufferedImage.TYPE_INT_RGB);
-        for(int y=0;y<image.getHeight();y++){
-            for(int x=0;x<image.getWidth();x++){
-                Graphics2D g2d = image.createGraphics();
-                if(iter[x][y]>=0&&iter[x][y]<10){                
-                    g2d.setColor(Color.BLUE);
-                }else if(iter[x][y]>=10&&iter[x][y]<20){
-                    g2d.setColor(Color.CYAN);                                                    
-                }else if(iter[x][y]>=20){
-                    g2d.setColor(Color.GREEN);
-                }
-                if(iter[x][y]!=-1)g2d.drawRect(x,y,1,1);
-            }
-        }
-        g.drawImage(image,
-                0,0,null);
+        System.out.println("Started drawing");          
+        BufferedImage image=new BufferedImage(pan.getWidth(),pan.getHeight(),BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, pan.getWidth(), pan.getHeight(), pix, 0, pan.getWidth());      
+        g.drawImage(image, 0, 0, this);
         System.out.println("Done drawing");
     }
     
@@ -159,19 +145,25 @@ public class Mandelbrot extends javax.swing.JFrame {
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         pan.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pan.setPreferredSize(new java.awt.Dimension(800, 800));
+        pan.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                panMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout panLayout = new javax.swing.GroupLayout(pan);
         pan.setLayout(panLayout);
         panLayout.setHorizontalGroup(
             panLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 396, Short.MAX_VALUE)
+            .addGap(0, 846, Short.MAX_VALUE)
         );
         panLayout.setVerticalGroup(
             panLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 396, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
-        getContentPane().add(pan, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 400, -1));
+        getContentPane().add(pan, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 850, 900));
 
         drawBut.setText("Draw!");
         drawBut.addActionListener(new java.awt.event.ActionListener() {
@@ -179,19 +171,19 @@ public class Mandelbrot extends javax.swing.JFrame {
                 drawButActionPerformed(evt);
             }
         });
-        getContentPane().add(drawBut, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 410, 127, 80));
+        getContentPane().add(drawBut, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 910, 127, 80));
 
         jLabel1.setText("From");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 430, -1, -1));
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 930, -1, -1));
 
         jLabel2.setText("To");
-        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 460, -1, -1));
+        getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 960, -1, -1));
 
         jLabel3.setText("A");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 410, 10, -1));
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 910, 10, -1));
 
         jLabel4.setText("B");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 410, 10, -1));
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 910, 10, -1));
 
         aFrom.setText("-2");
         aFrom.addActionListener(new java.awt.event.ActionListener() {
@@ -199,7 +191,7 @@ public class Mandelbrot extends javax.swing.JFrame {
                 aFromActionPerformed(evt);
             }
         });
-        getContentPane().add(aFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 430, 30, -1));
+        getContentPane().add(aFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 930, 30, -1));
 
         aTo.setText("2");
         aTo.addActionListener(new java.awt.event.ActionListener() {
@@ -207,23 +199,23 @@ public class Mandelbrot extends javax.swing.JFrame {
                 aToActionPerformed(evt);
             }
         });
-        getContentPane().add(aTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 460, 30, -1));
+        getContentPane().add(aTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 960, 30, -1));
 
-        bFrom.setText("-1");
+        bFrom.setText("-2");
         bFrom.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bFromActionPerformed(evt);
             }
         });
-        getContentPane().add(bFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 430, 30, -1));
+        getContentPane().add(bFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 930, 30, -1));
 
-        bTo.setText("1");
+        bTo.setText("2");
         bTo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bToActionPerformed(evt);
             }
         });
-        getContentPane().add(bTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 460, 30, -1));
+        getContentPane().add(bTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 960, 30, -1));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -246,14 +238,21 @@ public class Mandelbrot extends javax.swing.JFrame {
 
     private void drawButActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_drawButActionPerformed
         // TODO add your handling code here:
-        drawBut.setVisible(false);
+        if(vir){
+        drawBut.setText("Redraw");
         xc=pan.getWidth()/2;
         yc=pan.getHeight()/2;
-        pan.setBackground(Color.black);
-        iter=new float[pan.getWidth()][pan.getHeight()];
+        pix=new int[pan.getWidth()*pan.getHeight()];
+        g=pan.getGraphics();
+        }        
         getIter(); 
         draw();
     }//GEN-LAST:event_drawButActionPerformed
+
+    private void panMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_panMouseClicked
+        // TODO add your handling code here:
+        
+    }//GEN-LAST:event_panMouseClicked
 
     /**
      * @param args the command line arguments
