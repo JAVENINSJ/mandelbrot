@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package mandelbrot;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,8 +16,8 @@ import static javax.swing.SwingUtilities.*;
  * @author Mr. Nobody
  */
 class ima{
-    float real=0,img=0;    
-    public ima(float x,float y){
+    double real=0,img=0;    
+    public ima(double x,double y){
         this.real=x;
         this.img=y;
     }      
@@ -27,7 +28,8 @@ public class Mandelbrot extends javax.swing.JFrame {
     /**
      * Creates new form Mandelbrot
      */    
-    int midY,midX,xc,yc,tempMouseX,tempMouseY,FirstLVL=10,SecondLVL=20,ThirdLVL=1000,stage=0,escape=2;
+    int midY,midX,xc,yc,FirstLVL=10,SecondLVL=20,ThirdLVL=100,stage=0,escape=2;
+    double speedA,speedB,tempMouseX,tempMouseY;
     int[] pix;
     Graphics g;
     boolean vir=true;
@@ -40,35 +42,38 @@ public class Mandelbrot extends javax.swing.JFrame {
         addMouseListener(new MouseAdapter() { 
             @Override
             public void mousePressed(MouseEvent e){
-                System.out.println("Mouse Pressed");
-                tempMouseX=e.getX()-xc;
-                tempMouseY=e.getY()-yc;   
+                if(isLeftMouseButton(e)){
+                    tempMouseX=Double.parseDouble(aFrom.getText())+e.getX()*speedA;
+                    tempMouseY=Double.parseDouble(bTo.getText())-e.getY()*speedB;
+                    g.setColor(Color.green);                
+                    g.fillRect(e.getX(),e.getY(),4,4);
+                    System.out.println(tempMouseX);
+                    System.out.println(tempMouseY);                
+                }
             }
             @Override
             public void mouseReleased(MouseEvent e){   
-                float speedA=(float) Math.abs(Double.parseDouble(aFrom.getText())-Double.parseDouble(aTo.getText()))/pan.getWidth();
-                float speedB=(float) Math.abs(Double.parseDouble(bFrom.getText())-Double.parseDouble(bTo.getText()))/pan.getHeight();               
-                
                 if(isLeftMouseButton(e)){                    
-                    aFrom.setText(String.valueOf((tempMouseX)*speedA));
-                    aTo.setText(String.valueOf((e.getX()-xc)*speedA));                 
-                    bFrom.setText(String.valueOf((tempMouseY)*speedB));
-                    bTo.setText(String.valueOf((e.getY()-xc)*speedB));                    
+                    double toX=Double.parseDouble(aFrom.getText())+e.getX()*speedA;
+                    double toY=Double.parseDouble(bTo.getText())-e.getY()*speedB;    
+                    aFrom.setText(String.valueOf(tempMouseX));
+                    bFrom.setText(String.valueOf(tempMouseY));
+                    aTo.setText(String.valueOf(toX));
+                    bTo.setText(String.valueOf(toY));
                 }else if(isRightMouseButton(e)){
                     aFrom.setText("-1");
                     aTo.setText("1");                 
                     bFrom.setText("-1");
                     bTo.setText("1");  
                 }
-                System.out.println("Mouse Released");
                 getIter(); 
                 draw(); 
             }
         });
     }
 
-    public float len(ima a){
-        return (float) sqrt(a.real*a.real+a.img*a.img);
+    public double len(ima a){
+        return (double) sqrt(a.real*a.real+a.img*a.img);
     }
     
     public ima square(ima a){
@@ -99,14 +104,12 @@ public class Mandelbrot extends javax.swing.JFrame {
     
     public void getIter(){
         //System.out.println("Starting Iterating");
-        float speedA=(float) Math.abs(Double.parseDouble(aFrom.getText())-Double.parseDouble(aTo.getText()))/pan.getWidth();
-        float speedB=(float) Math.abs(Double.parseDouble(bFrom.getText())-Double.parseDouble(bTo.getText()))/pan.getHeight();
-        System.out.println(speedA);
-        System.out.println(speedB);       
+        speedA=(double) Math.abs(Double.parseDouble(aFrom.getText())-Double.parseDouble(aTo.getText()))/pan.getWidth();
+        speedB=(double) Math.abs(Double.parseDouble(bFrom.getText())-Double.parseDouble(bTo.getText()))/pan.getHeight();     
         for(int y=0;y<pan.getHeight();y++){
             for(int x=0;x<pan.getWidth();x++){            
                 ima a=new ima(0,0);  //start number (squarable)                
-                ima b=new ima(Float.parseFloat(aFrom.getText())+x*speedA,Float.parseFloat(bFrom.getText())+y*speedB);  //the adding number
+                ima b=new ima(Double.parseDouble(aFrom.getText())+x*speedA,Double.parseDouble(bTo.getText())-y*speedB);  //the adding number
                 int loc=y*pan.getWidth()+x;
                 if(stage==0){                    
                     if(len(iteration(a,b,0,ThirdLVL))<10){
@@ -190,6 +193,7 @@ public class Mandelbrot extends javax.swing.JFrame {
         bFrom = new javax.swing.JTextField();
         bTo = new javax.swing.JTextField();
         modeSel = new javax.swing.JButton();
+        reset = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setSize(new java.awt.Dimension(810, 900));
@@ -275,7 +279,15 @@ public class Mandelbrot extends javax.swing.JFrame {
                 modeSelActionPerformed(evt);
             }
         });
-        getContentPane().add(modeSel, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 800, 160, 80));
+        getContentPane().add(modeSel, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 800, 160, 40));
+
+        reset.setText("Reset");
+        reset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetActionPerformed(evt);
+            }
+        });
+        getContentPane().add(reset, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 840, 160, 40));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -322,6 +334,16 @@ public class Mandelbrot extends javax.swing.JFrame {
             stage=0;
         }
     }//GEN-LAST:event_modeSelActionPerformed
+
+    private void resetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetActionPerformed
+        // TODO add your handling code here:
+        aFrom.setText("-2");
+        aTo.setText("2");
+        bFrom.setText("-2");
+        bTo.setText("2");
+        getIter();
+        draw();
+    }//GEN-LAST:event_resetActionPerformed
  
     /**
      * @param args the command line arguments
@@ -340,5 +362,6 @@ public class Mandelbrot extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JButton modeSel;
     private javax.swing.JPanel pan;
+    private javax.swing.JButton reset;
     // End of variables declaration//GEN-END:variables
 }
