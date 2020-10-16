@@ -48,34 +48,32 @@ public class test extends javax.swing.JFrame {
     
     public test() {
         initComponents();
-        addMouseListener(new MouseAdapter() { 
+        pan.addMouseListener(new MouseAdapter() { 
             @Override
             public void mousePressed(MouseEvent e){
                 if(isLeftMouseButton(e)){
                     tempMouseX=Double.parseDouble(aFrom.getText())+e.getX()*speedA;
                     tempMouseY=Double.parseDouble(bTo.getText())-e.getY()*speedB;
                     g.setColor(Color.green);                
-                    g.fillRect(e.getX(),e.getY(),4,4);
-                    System.out.println(tempMouseX);
-                    System.out.println(tempMouseY);                    
+                    g.fillRect(e.getX(),e.getY(),4,4);                  
                 }
             }
             @Override
             public void mouseReleased(MouseEvent e){   
-                if(isLeftMouseButton(e)){                    
-                    double toX=Double.parseDouble(aFrom.getText())+e.getX()*speedA;
-                    double toY=Double.parseDouble(bTo.getText())-e.getY()*speedB;    
+                if(isLeftMouseButton(e)){ 
+                    change();
+                    double toX=Double.parseDouble(aFrom.getText())+e.getX()*speedA;    
                     aFrom.setText(String.valueOf(tempMouseX));
                     bFrom.setText(String.valueOf(tempMouseY));
                     aTo.setText(String.valueOf(toX));
-                    bTo.setText(String.valueOf(toY));
-                    change();
-                }else if(isRightMouseButton(e)){                    
-                    aFrom.setText(stack.peek().aStart);
-                    aTo.setText(stack.peek().aEnd);                 
-                    bFrom.setText(stack.peek().bStart);
-                    bTo.setText(stack.pop().bEnd);  
-                    System.out.println("Help me god");
+                    bTo.setText(String.valueOf(Math.abs(toX-tempMouseX)+tempMouseY));                    
+                }else if(isRightMouseButton(e)){
+                    if(!stack.empty()){
+                        aFrom.setText(stack.peek().aStart);                               
+                        aTo.setText(stack.peek().aEnd);                 
+                        bFrom.setText(stack.peek().bStart);
+                        bTo.setText(stack.pop().bEnd);                         
+                    }
                 }
                 doThings();
             }
